@@ -12,6 +12,4 @@ dependencies = [
     "customtkinter>=5.2.2",
 ]
 
-[project.scripts]
-iosrealrun = "main:main"
-iosrealrun-gui = "gui_main:main"
+

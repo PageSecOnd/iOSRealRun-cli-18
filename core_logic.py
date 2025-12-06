@@ -78,6 +78,7 @@ class RunnerCore:
             if self.process.is_alive():
                 self.logger.warning("隧道进程未正常终止，强制关闭")
                 self.process.kill()
+                self.process.join(timeout=2)  # Wait for kill to complete
             self.logger.info("隧道进程已终止")
             self.process = None
     

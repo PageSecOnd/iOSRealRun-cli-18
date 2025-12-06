@@ -54,7 +54,6 @@ class iOSRealRunGUI(ctk.CTk):
         self.running = False
         self.tunnel_info = None
         self.route_data = None
-        self.loop = None
         self.runner_thread = None
         
         # Load initial config
@@ -306,23 +305,20 @@ class iOSRealRunGUI(ctk.CTk):
             try:
                 process, address, port = self.tunnel_info
                 
-                # Create event loop for this thread
-                self.loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(self.loop)
-                
+                # Use asyncio.run() for proper event loop management
                 logging.info(f"开始模拟跑步，速度: {speed:.1f} m/s")
                 logging.info("按'停止模拟'按钮退出")
                 
-                # Run the simulation
-                self.loop.run_until_complete(
-                    self.runner_core.run_simulation(address, port, self.route_data, speed)
-                )
+                # Run the simulation with proper event loop handling
+                try:
+                    asyncio.run(
+                        self.runner_core.run_simulation(address, port, self.route_data, speed)
+                    )
+                except RuntimeError as e:
+                    # Handle case where event loop is already running
+                    logging.warning(f"事件循环错误: {e}")
             except Exception as e:
                 logging.error(f"模拟运行出错: {e}")
-            finally:
-                if self.loop:
-                    self.loop.close()
-                self.loop = None
         
         self.runner_thread = threading.Thread(target=run_thread, daemon=True)
         self.runner_thread.start()
@@ -334,11 +330,7 @@ class iOSRealRunGUI(ctk.CTk):
         self.update_status("已停止", "yellow")
         logging.info("正在停止模拟...")
         
-        # Stop the event loop
-        if self.loop and self.loop.is_running():
-            self.loop.call_soon_threadsafe(self.loop.stop)
-        
-        # Cleanup
+        # Cleanup - the runner core will handle graceful shutdown
         if self.runner_core:
             self.runner_core.cleanup()
         
@@ -377,11 +369,13 @@ def main():
             print("右键程序图标 -> '以管理员身份运行'")
             input("按回车键退出...")
             sys.exit(1)
-    elif os.geteuid() != 0:
-        print("错误: 请以root权限运行此程序")
-        print("使用: sudo python gui_main.py")
-        input("按回车键退出...")
-        sys.exit(1)
+    elif hasattr(os, 'geteuid'):
+        # Unix-like systems (macOS, Linux)
+        if os.geteuid() != 0:
+            print("错误: 请以root权限运行此程序")
+            print("使用: sudo python gui_main.py")
+            input("按回车键退出...")
+            sys.exit(1)
     
     # Create and run GUI
     app = iOSRealRunGUI()
