@@ -1,11 +1,17 @@
 [project]
 name = "iosrealrun-cli-18"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.2.0"
+description = "iOS Real Run CLI and GUI - Location simulation tool for iOS devices"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "geopy>=2.4.1",
-    "pymobiledevice3>=5.0.4",
+    "pymobiledevice3>=6.1.6",
     "pyyaml>=6.0.3",
+    "coloredlogs>=15.0.1",
+    "customtkinter>=5.2.2",
 ]
+
+[project.scripts]
+iosrealrun = "main:main"
+iosrealrun-gui = "gui_main:main"
